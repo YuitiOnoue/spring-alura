@@ -1,46 +1,88 @@
 package br.com.alura.gerenciador.servlet;
 
 import java.io.IOException;
+
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import br.com.alura.gerenciador.acao.Acao;
 import br.com.alura.gerenciador.acao.AlteraEmpresa;
 import br.com.alura.gerenciador.acao.ListaEmpresas;
 import br.com.alura.gerenciador.acao.MostraEmpresa;
 import br.com.alura.gerenciador.acao.NovaEmpresa;
+import br.com.alura.gerenciador.acao.NovaEmpresaForm;
 import br.com.alura.gerenciador.acao.RemoveEmpresa;
+import br.com.alura.gerenciador.modelo.ActionResponse;
 
 /**
  * Servlet implementation class UnicaEntradaServlet
  */
 @WebServlet("/entrada")
 public class UnicaEntradaServlet extends HttpServlet {
+	
 	private static final long serialVersionUID = 1L;
+	private static final String CLASS_PATH = "br.com.alura.gerenciador.acao.";
        
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
 		String paramAcao = request.getParameter("acao");
-
-		if(paramAcao.equals("ListaEmpresas")) {
-		    ListaEmpresas acao = new ListaEmpresas();
-		    acao.executa(request, response);
-		} else if(paramAcao.equals("RemoveEmpresa")) {
-		    RemoveEmpresa acao = new RemoveEmpresa();
-		    acao.executa(request, response);
-		} else if(paramAcao.equals("MostraEmpresa")) {
-		    MostraEmpresa acao = new MostraEmpresa();
-		    acao.executa(request, response);
-		} else if(paramAcao.equals("AlteraEmpresa")) {
-		    AlteraEmpresa acao = new AlteraEmpresa();
-		    acao.executa(request, response);
-		} else if(paramAcao.equals("NovaEmpresa")) {
-		    NovaEmpresa acao = new NovaEmpresa();
-		    acao.executa(request, response);
+		
+		System.out.println("Ação " + paramAcao);
+		
+		String actionResponse;
+		try {
+			Class<?> classe = Class.forName(CLASS_PATH + paramAcao);
+			Acao acao = (Acao) classe.newInstance();
+			actionResponse = acao.executa(request, response);
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ServletException
+				| IOException e) {
+			throw new ServletException(e);
 		}
 		
-	}
+//		String actionResponse = null;
+		
+//		if(paramAcao.equals("ListaEmpresas")) {
+//		    ListaEmpresas acao = new ListaEmpresas();
+//		    actionResponse = acao.executa(request, response);
+//		} else if(paramAcao.equals("RemoveEmpresa")) {
+//		    RemoveEmpresa acao = new RemoveEmpresa();
+//		    actionResponse = acao.executa(request, response);
+//		} else if(paramAcao.equals("MostraEmpresa")) {
+//		    MostraEmpresa acao = new MostraEmpresa();
+//		    actionResponse = acao.executa(request, response);
+//		} else if(paramAcao.equals("AlteraEmpresa")) {
+//		    AlteraEmpresa acao = new AlteraEmpresa();
+//		    actionResponse = acao.executa(request, response);
+//		} else if(paramAcao.equals("NovaEmpresa")) {
+//		    NovaEmpresa acao = new NovaEmpresa();
+//		    actionResponse = acao.executa(request, response);
+//		} else if(paramAcao.equals("NovaEmpresaForm")) {
+//		    NovaEmpresaForm acao = new NovaEmpresaForm();
+//		    actionResponse = acao.executa(request, response);
+//		}
+		
+		ActionResponse retorno = new ActionResponse(actionResponse);
+		
+		if (retorno.isValid()) {
 
+			switch (retorno.getType()) {
+				case "redirect": {
+					response.sendRedirect(retorno.getDestination());
+					break;
+				}
+				case "forward": {
+					RequestDispatcher rd = request.getRequestDispatcher("WEB-INF/view/" +  retorno.getDestination());
+					rd.forward(request, response);
+					break;
+				}
+				default:
+					System.out.println("ActionResponse get type " + retorno.getType());
+			}
+		}
+
+	}
 }
