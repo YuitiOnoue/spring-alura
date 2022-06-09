@@ -8,6 +8,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import br.com.alura.gerenciador.acao.Acao;
 import br.com.alura.gerenciador.acao.AlteraEmpresa;
@@ -33,6 +34,15 @@ public class UnicaEntradaServlet extends HttpServlet {
 		
 		System.out.println("Ação " + paramAcao);
 		
+		HttpSession sessao = request.getSession();
+		boolean usuarioNaoEstaLogado = sessao.getAttribute("usuarioLogado") == null;
+		boolean ehUmaAcaoProtegida = !(paramAcao.equals("Login") || paramAcao.equals("LoginForm"));
+		
+		if (ehUmaAcaoProtegida && usuarioNaoEstaLogado) {
+			response.sendRedirect("entrada?acao=LoginForm");
+			return;
+		}
+		
 		String actionResponse;
 		try {
 			Class<?> classe = Class.forName(CLASS_PATH + paramAcao);
@@ -42,28 +52,6 @@ public class UnicaEntradaServlet extends HttpServlet {
 				| IOException e) {
 			throw new ServletException(e);
 		}
-		
-//		String actionResponse = null;
-		
-//		if(paramAcao.equals("ListaEmpresas")) {
-//		    ListaEmpresas acao = new ListaEmpresas();
-//		    actionResponse = acao.executa(request, response);
-//		} else if(paramAcao.equals("RemoveEmpresa")) {
-//		    RemoveEmpresa acao = new RemoveEmpresa();
-//		    actionResponse = acao.executa(request, response);
-//		} else if(paramAcao.equals("MostraEmpresa")) {
-//		    MostraEmpresa acao = new MostraEmpresa();
-//		    actionResponse = acao.executa(request, response);
-//		} else if(paramAcao.equals("AlteraEmpresa")) {
-//		    AlteraEmpresa acao = new AlteraEmpresa();
-//		    actionResponse = acao.executa(request, response);
-//		} else if(paramAcao.equals("NovaEmpresa")) {
-//		    NovaEmpresa acao = new NovaEmpresa();
-//		    actionResponse = acao.executa(request, response);
-//		} else if(paramAcao.equals("NovaEmpresaForm")) {
-//		    NovaEmpresaForm acao = new NovaEmpresaForm();
-//		    actionResponse = acao.executa(request, response);
-//		}
 		
 		ActionResponse retorno = new ActionResponse(actionResponse);
 		
